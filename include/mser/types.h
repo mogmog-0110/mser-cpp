@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstddef>
+#include <string>
 
 namespace mser {
 
@@ -27,7 +28,6 @@ struct MSERResult {
     size_t truncationPoint;     // 最適切り捨て点 d̂(n)
     double mserValue;           // MSER値 gn(d̂)
     bool converged;             // 収束判定
-    std::string reason;         // 判定理由
     size_t totalSamples;        // 総サンプル数
     size_t batchCount;          // バッチ数（MSER-m用）
     MSERVariant variant;        // 使用したMSER変種

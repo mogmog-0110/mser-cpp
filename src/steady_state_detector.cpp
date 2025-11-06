@@ -28,7 +28,6 @@ bool SteadyStateDetector::addDataPoint(TimeSeriesValue value) {
     if (data_.size() > config_.maxSamples) {
         converged_ = true;
         lastResult_.converged = false;
-        lastResult_.reason = "最大サンプル数に達しましたが収束しませんでした";
         triggerCallback(lastResult_);
         return false;
     }
@@ -215,7 +214,7 @@ std::unique_ptr<SteadyStateDetector> createForPhysXSimulation(
         std::cout << "  切り捨て点: " << result.truncationPoint << std::endl;
         std::cout << "  MSER値: " << result.mserValue << std::endl;
         std::cout << "  総サンプル数: " << result.totalSamples << std::endl;
-        std::cout << "  理由: " << result.reason << std::endl;
+        std::cout << "  収束状態: " << (result.converged ? "成功" : "失敗") << std::endl;
     });
     
     return detector;
@@ -244,7 +243,7 @@ std::unique_ptr<SteadyStateDetector> createForGenericSimulation(
             std::cout << "  バッチ数: " << result.batchCount << std::endl;
         }
         
-        std::cout << "  理由: " << result.reason << std::endl;
+        std::cout << "  収束状態: " << (result.converged ? "成功" : "失敗") << std::endl;
     });
     
     return detector;
