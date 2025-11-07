@@ -139,7 +139,6 @@ config.warmingSteps = 50;                       // ウォーミングアップ�
 
 - [アルゴリズム詳細](docs/algorithm.md) - MSER理論と実装の詳細
 - [API リファレンス](docs/api.md) - 完全なAPI仕様
-- [論文・参考文献](docs/references.md) - 引用情報と関連研究
 
 ## 🧪 Examples
 
