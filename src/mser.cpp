@@ -23,7 +23,6 @@ MSERResult MSER::calculateMSER1(const TimeSeriesData& data) {
     
     if (!validateData(data)) {
         result.converged = false;
-        result.reason = "データが不十分または無効です";
         return result;
     }
     
@@ -32,7 +31,6 @@ MSERResult MSER::calculateMSER1(const TimeSeriesData& data) {
     result.truncationPoint = truncPoint;
     result.mserValue = mserVal;
     result.converged = (mserVal < std::numeric_limits<double>::infinity());
-    result.reason = result.converged ? "収束しました" : "収束しませんでした";
     
     return result;
 }
@@ -48,7 +46,6 @@ MSERResult MSER::calculateMSERm(const TimeSeriesData& data, size_t batchSize) {
     
     if (!validateData(data, batchSize * 2)) {  // バッチ処理には最低限のサンプル数が必要
         result.converged = false;
-        result.reason = "バッチ処理に必要なデータが不十分です";
         return result;
     }
     
@@ -58,7 +55,6 @@ MSERResult MSER::calculateMSERm(const TimeSeriesData& data, size_t batchSize) {
     
     if (batchMeans.size() < 10) {  // 最低限のバッチ数
         result.converged = false;
-        result.reason = "バッチ数が不十分です";
         return result;
     }
     
@@ -68,7 +64,6 @@ MSERResult MSER::calculateMSERm(const TimeSeriesData& data, size_t batchSize) {
     result.truncationPoint = truncPoint;
     result.mserValue = mserVal;
     result.converged = (mserVal < std::numeric_limits<double>::infinity());
-    result.reason = result.converged ? "収束しました" : "収束しませんでした";
     
     return result;
 }
