@@ -1,233 +1,140 @@
-# MSER-CPP: C++ Implementation of Marginal Standard Error Rule
+# mser-cpp
 
-[![CMake](https://github.com/shiggy/mser-cpp/workflows/CMake/badge.svg)](https://github.com/mogmog-0110/mser-cpp/actions)
+シミュレーションが定常状態に達したかを自動で判定する C++ ライブラリ。
+White (1997) の Marginal Standard Error Rule (MSER) と、その業界標準版である
+MSER-5 を実装している。マクロサイクル化シミュレーションの終了判定に使うために書いた。
+
+[![CMake](https://github.com/mogmog-0110/mser-cpp/workflows/CMake/badge.svg)](https://github.com/mogmog-0110/mser-cpp/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-MSERライブラリは、シミュレーションの定常状態検出のためのC++実装です。White (1997)論文に基づくMarginal Standard Error Rule (MSER)アルゴリズムを提供し、特に業界標準として広く使用されているMSER-5をサポートしています。
+## できること
 
-## 📋 Features
+- MSER-1。全データ点を使うオリジナル
+- MSER-5。バッチサイズ 5。実務ではこれが既定
+- MSER-m。任意のバッチサイズ
+- 走らせながらの逐次判定。データ点を 1 つ足すたびに収束を見る
+- PhysX 向けの既定値セット
+- C++17 / CMake
 
-- **MSER-1**: オリジナルのMSER実装（全データ使用）
-- **MSER-5**: 業界標準のバッチサイズ5版（推奨）
-- **MSER-m**: 任意バッチサイズ版
-- **リアルタイム検出**: シミュレーション進行中の自動的な定常状態検出
-- **PhysXサポート**: 物理シミュレーション向けの最適化
-- **C++17対応**: モダンC++機能を活用
-- **CMake統合**: 簡単な依存関係管理とビルド
-
-## 🚀 Quick Start
-
-### 基本的な使用方法
+## 使い方
 
 ```cpp
 #include <mser/steady_state_detector.h>
 #include <vector>
 
 int main() {
-    // MSER-5を使用した定常状態検出器を作成
     mser::SteadyStateConfig config;
     config.variant = mser::MSERVariant::MSER_5;
     config.convergenceThreshold = 0.01;
-    
+
     auto detector = std::make_unique<mser::SteadyStateDetector>(config);
-    
-    // シミュレーションループ
-    std::vector<double> simulationData;
+
     for (int step = 0; step < 10000; ++step) {
-        double value = runSimulationStep();  // あなたのシミュレーション
-        
+        double value = runSimulationStep();
+
         if (detector->addDataPoint(value)) {
-            std::cout << "定常状態に到達しました！ステップ: " << step << std::endl;
+            std::cout << "定常状態に到達 step=" << step << std::endl;
             break;
         }
     }
-    
-    // 結果の確認
+
     const auto& result = detector->getLastResult();
     std::cout << "MSER値: " << result.mserValue << std::endl;
     std::cout << "切り捨て点: " << result.truncationPoint << std::endl;
-    
     return 0;
 }
 ```
 
-### PhysXシミュレーション向け
+PhysX シミュレーションからは、既定値の入った生成関数を使う。
 
 ```cpp
-#include <mser/steady_state_detector.h>
-
-// PhysX最適化設定で検出器を作成
 auto detector = mser::integration::createForPhysXSimulation();
 
-// 結合数やクラスタサイズなどのメトリックを監視
 detector->setConvergenceCallback([](const mser::MSERResult& result) {
-    std::cout << "PhysXシミュレーション収束検出" << std::endl;
-    // 自動的にシミュレーション終了
     stopSimulation();
 });
 ```
 
-## 📦 Installation
-
-### CMakeプロジェクトでの使用
-
-1. プロジェクトをクローン：
+## ビルド
 
 ```bash
 git clone https://github.com/mogmog-0110/mser-cpp.git
 cd mser-cpp
-```
-
-2. ビルド：
-
-```bash
 mkdir build && cd build
 cmake ..
 make
 ```
 
-3. インストール：
-
-```bash
-sudo make install
-```
-
-### CMakeでの依存関係管理
-
-既存のCMakeプロジェクトに統合する場合：
+既存の CMake プロジェクトからは `find_package` かサブモジュールで取り込む。
 
 ```cmake
 find_package(mser-cpp REQUIRED)
 target_link_libraries(your_target mser)
 ```
 
-サブモジュールとして使用する場合：
-
 ```cmake
 add_subdirectory(third_party/mser-cpp)
 target_link_libraries(your_target mser)
 ```
 
-## 🔧 Configuration
-
-### 基本設定
+## 設定
 
 ```cpp
 mser::SteadyStateConfig config;
-config.variant = mser::MSERVariant::MSER_5;     // 使用するMSER変種
-config.batchSize = 5;                           // バッチサイズ（MSER-m用）
+config.variant = mser::MSERVariant::MSER_5;     // 使う変種
+config.batchSize = 5;                           // バッチサイズ (MSER-m 用)
 config.minSamples = 100;                        // 最小サンプル数
 config.maxSamples = 10000;                      // 最大サンプル数
 config.convergenceThreshold = 0.01;             // 収束閾値
 config.checkInterval = 50;                      // チェック間隔
-config.enableWarming = true;                    // ウォーミングアップ有効化
-config.warmingSteps = 50;                       // ウォーミングアップステップ数
+config.enableWarming = true;                    // ウォーミングアップ
+config.warmingSteps = 50;                       // ウォーミングアップのステップ数
 ```
 
-### 推奨設定
+用途ごとの目安。
 
-| 用途 | バリアント | バッチサイズ | 収束閾値 | 最小サンプル | 説明 |
-|------|------------|--------------|----------|--------------|------|
-| 一般シミュレーション | MSER-5 | 5 | 0.01 | 100 | 業界標準 |
-| 高精度解析 | MSER-1 | - | 0.005 | 200 | より厳密 |
-| 高速検出 | MSER-5 | 5 | 0.02 | 50 | 速やかに終了 |
-| PhysXシミュレーション | MSER-5 | 5 | 0.01 | 200 | 物理シミュレーション最適化 |
+| 用途 | 変種 | バッチサイズ | 収束閾値 | 最小サンプル |
+|---|---|---|---|---|
+| 一般 | MSER-5 | 5 | 0.01 | 100 |
+| 高精度 | MSER-1 | なし | 0.005 | 200 |
+| 速く切り上げる | MSER-5 | 5 | 0.02 | 50 |
+| PhysX | MSER-5 | 5 | 0.01 | 200 |
 
-## 📚 Documentation
+## アルゴリズム
 
-詳細なドキュメントは[docs/](docs/)ディレクトリにあります：
-
-- [アルゴリズム詳細](docs/algorithm.md) - MSER理論と実装の詳細
-- [API リファレンス](docs/api.md) - 完全なAPI仕様
-
-## 🧪 Examples
-
-[examples/](examples/)ディレクトリにサンプルコードがあります：
-
-- `basic_usage.cpp` - 基本的な使用方法
-- `physx_integration.cpp` - PhysXとの統合例
-- `custom_metrics.cpp` - カスタムメトリック監視
-- `batch_comparison.cpp` - MSER変種の比較
-
-## 🔬 Algorithm
-
-このライブラリは以下の論文に基づく実装です：
-
-### White (1997) MSER Algorithm
-
-MSER値の計算式：
+打ち切り点 k を、切り捨て後の標本平均の周辺信頼区間の幅が最小になる位置として選ぶ。
 
 ```
 gn(k) = Sn,k² / (n-k)²
+
+Sn,k² = 1/(n-k) ∑[j=k to n-1] (Yj - Ȳn,k)²
+Ȳn,k  = 1/(n-k) ∑[j=k to n-1] Yj
+d̂(n)  = argmin[0≤k≤⌊n/2⌋-1] gn(k)
 ```
 
-where:
-- `Sn,k²` = 1/(n-k) ∑[j=k to n-1] (Yj - Ȳn,k)²
-- `Ȳn,k` = 1/(n-k) ∑[j=k to n-1] Yj
-- `d̂(n)` = argmin[0≤k≤⌊n/2⌋-1] gn(k)
+MSER-m は、データをサイズ m のバッチに分けてバッチ平均へ同じ規則を当てる。
+m = 5 が MSER-5。
 
-### MSER変種
+詳細は [docs/algorithm.md](docs/algorithm.md)、API は [docs/api.md](docs/api.md)。
+使用例は [examples/](examples/) に置いてある。
 
-1. **MSER-1** (Original): 全データポイントを使用
-2. **MSER-m** (Batched): データをサイズmのバッチに分割してバッチ平均に適用
-3. **MSER-5** (Industry Standard): m=5のMSER-m、業界標準として広く使用
+## 参考文献
 
-## 🤝 Contributing
+K. Preston White Jr., "An Effective Truncation Heuristic for Bias Reduction in
+Simulation Output," *Simulation*, 69(6), 323–334, 1997.
 
-1. フォーク
-2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. コミット (`git commit -m 'Add amazing feature'`)
-4. プッシュ (`git push origin feature/amazing-feature`)
-5. Pull Request作成
-
-## 📄 License
-
-このプロジェクトはMITライセンスの下で配布されています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
-
-## 📖 Citation
-
-学術論文でこのライブラリを使用する場合は、以下を引用してください：
-
-### Primary Reference (MSER Theory)
 ```bibtex
 @article{white1997,
-    title={The autoregressive model as a tool for steady-state detection},
-    author={White, Kenneth P. Jr.},
-    journal={ACM Transactions on Modeling and Computer Simulation},
-    volume={7},
-    number={4},
-    pages={459--478},
-    year={1997},
-    publisher={ACM}
+    title   = {An Effective Truncation Heuristic for Bias Reduction in Simulation Output},
+    author  = {White, K. Preston, Jr.},
+    journal = {Simulation},
+    volume  = {69},
+    number  = {6},
+    pages   = {323--334},
+    year    = {1997}
 }
 ```
 
-### MSER-m and Industry Applications
-```bibtex
-@inproceedings{oliveira2024,
-    title={Simulation output analysis using MSER-m rule},
-    author={Oliveira, F.L.C. and others},
-    booktitle={Proceedings of the Winter Simulation Conference},
-    pages={1--12},
-    year={2024}
-}
-```
+## ライセンス
 
-### This Implementation
-```bibtex
-@software{mser_cpp_2025,
-    title={MSER-CPP: C++ Implementation of Marginal Standard Error Rule},
-    author={Shiggy},
-    year={2025},
-    url={https://github.com/mogmog-0110/mser-cpp}
-}
-```
-
-## 💬 Support
-
-- 🐛 バグ報告: [GitHub Issues](https://github.com/shiggy/mser-cpp/issues)
-
-**開発者**: Shiggy  
-**プロジェクト**: マクロサイクル化シミュレーション自動終了システム  
-**バージョン**: 1.0.0  
-**最終更新**: 2025年11月
+MIT。詳細は [LICENSE](LICENSE)。
