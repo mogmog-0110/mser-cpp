@@ -1,18 +1,16 @@
 # mser-cpp
 
-シミュレーションが定常状態に達したかを自動で判定する C++ ライブラリ。
-White (1997) の Marginal Standard Error Rule (MSER) と、その業界標準版である
-MSER-5 を実装している。マクロサイクル化シミュレーションの終了判定に使うために書いた。
+シミュレーションが定常状態に達したかを自動判定する C++ ライブラリです。White (1997) の Marginal Standard Error Rule（MSER）と、業界標準版の MSER-5 を実装しています。マクロサイクル化シミュレーションの終了判定を目的に開発しました。
 
 [![CMake](https://github.com/mogmog-0110/mser-cpp/workflows/CMake/badge.svg)](https://github.com/mogmog-0110/mser-cpp/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## できること
+## 機能
 
-- MSER-1。全データ点を使うオリジナル
-- MSER-5。バッチサイズ 5。実務ではこれが既定
-- MSER-m。任意のバッチサイズ
-- 走らせながらの逐次判定。データ点を 1 つ足すたびに収束を見る
+- 全データ点を使うオリジナルの MSER-1
+- バッチサイズを 5 とする、実務で標準的な MSER-5
+- 任意のバッチサイズを指定できる MSER-m
+- データ点を追加するたびに収束を確認する逐次判定
 - PhysX 向けの既定値セット
 - C++17 / CMake
 
@@ -45,7 +43,7 @@ int main() {
 }
 ```
 
-PhysX シミュレーションからは、既定値の入った生成関数を使う。
+PhysX シミュレーションでは、既定値を設定する生成関数を利用できます。
 
 ```cpp
 auto detector = mser::integration::createForPhysXSimulation();
@@ -65,7 +63,7 @@ cmake ..
 make
 ```
 
-既存の CMake プロジェクトからは `find_package` かサブモジュールで取り込む。
+既存の CMake プロジェクトには、`find_package` またはサブモジュールで追加します。
 
 ```cmake
 find_package(mser-cpp REQUIRED)
@@ -82,7 +80,7 @@ target_link_libraries(your_target mser)
 ```cpp
 mser::SteadyStateConfig config;
 config.variant = mser::MSERVariant::MSER_5;     // 使う変種
-config.batchSize = 5;                           // バッチサイズ (MSER-m 用)
+config.batchSize = 5;                           // バッチサイズ（MSER-m 用）
 config.minSamples = 100;                        // 最小サンプル数
 config.maxSamples = 10000;                      // 最大サンプル数
 config.convergenceThreshold = 0.01;             // 収束閾値
@@ -91,10 +89,10 @@ config.enableWarming = true;                    // ウォーミングアップ
 config.warmingSteps = 50;                       // ウォーミングアップのステップ数
 ```
 
-用途ごとの目安。
+用途ごとの設定目安は次のとおりです。
 
 | 用途 | 変種 | バッチサイズ | 収束閾値 | 最小サンプル |
-|---|---|---|---|---|
+|---|---|---:|---:|---:|
 | 一般 | MSER-5 | 5 | 0.01 | 100 |
 | 高精度 | MSER-1 | なし | 0.005 | 200 |
 | 速く切り上げる | MSER-5 | 5 | 0.02 | 50 |
@@ -102,9 +100,9 @@ config.warmingSteps = 50;                       // ウォーミングアップ�
 
 ## アルゴリズム
 
-打ち切り点 k を、切り捨て後の標本平均の周辺信頼区間の幅が最小になる位置として選ぶ。
+打ち切り点 `k` には、切り捨て後の標本平均に対する周辺信頼区間の幅が最小となる位置を選びます。
 
-```
+```text
 gn(k) = Sn,k² / (n-k)²
 
 Sn,k² = 1/(n-k) ∑[j=k to n-1] (Yj - Ȳn,k)²
@@ -112,11 +110,9 @@ Sn,k² = 1/(n-k) ∑[j=k to n-1] (Yj - Ȳn,k)²
 d̂(n)  = argmin[0≤k≤⌊n/2⌋-1] gn(k)
 ```
 
-MSER-m は、データをサイズ m のバッチに分けてバッチ平均へ同じ規則を当てる。
-m = 5 が MSER-5。
+MSER-m では、データをサイズ `m` のバッチに分割し、そのバッチ平均に同じ規則を適用します。`m = 5` が MSER-5 です。
 
-詳細は [docs/algorithm.md](docs/algorithm.md)、API は [docs/api.md](docs/api.md)。
-使用例は [examples/](examples/) に置いてある。
+詳しい説明は [docs/algorithm.md](docs/algorithm.md)、API は [docs/api.md](docs/api.md) を参照してください。使用例は [examples/](examples/) にあります。
 
 ## 参考文献
 
@@ -137,4 +133,4 @@ Simulation Output," *Simulation*, 69(6), 323–334, 1997.
 
 ## ライセンス
 
-MIT。詳細は [LICENSE](LICENSE)。
+MIT。詳細は [LICENSE](LICENSE) を参照してください。
